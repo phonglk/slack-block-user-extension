@@ -6,8 +6,11 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "type-check:watch": "npm run type-check -- --watch",
+    "versioning": "node bin/increaseVersion.js",
     "build": "npx webpack",
-    "build:dev": "npx webpack --config=webpack.config.dev.js --watch"
+    "zip": "mkdir -p archives && zip archives/dist_$(node -e \"console.log(require('./dist/manifest.json').version)\").zip dist/* ",
+    "build:dev": "npx webpack --config=webpack.config.dev.js --watch",
+    "build:deploy": "npm run versioning && npm run build && npm run zip"
   },
   "author": "LE KHOI PHONG",
   "license": "LICENSE",
