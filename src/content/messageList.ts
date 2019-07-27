@@ -20,7 +20,7 @@ const renderMessageList = async (workspace: Workspace) => {
         } else {
           const $userLink = node.querySelector('.c-message__sender_link') as HTMLLinkElement
           if (!$userLink) return
-          const idMatch = $userLink.href.match(/team\/([^/]+)/)
+          const idMatch = $userLink.href.match(/(?:team|services)\/([^/]+)/)
           if (!idMatch) return
           userId = idMatch[1]
         }
