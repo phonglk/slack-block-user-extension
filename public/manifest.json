@@ -1,0 +1,29 @@
+{
+  "name": "Slack Block User",
+  "description": "Block Slack User's Messages",
+  "version": "1.1.0",
+  "permissions": [
+    "storage", "tabs", "https://*.slack.com/*"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "icons": {
+    "32": "32.png",
+    "64": "64.png",
+   "128": "128.png" 
+  },
+  "content_scripts": [
+      {
+      "matches": [
+          "https://*.slack.com/*"
+          ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+      }
+  ], 
+  "manifest_version":2
+}
