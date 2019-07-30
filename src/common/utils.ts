@@ -13,7 +13,7 @@ export const getWorkspaceId = () => {
 }
 
 export const observeDOM = (targetNode: Node,
-  userConfig: { attributes?: boolean, childList?: boolean, substree?: boolean },
+  userConfig: { attributes?: boolean, childList?: boolean, subtree?: boolean },
   callback: MutationCallback ) => {
   const config = { attributes: false, childList: false, subtree: false, ...userConfig }
   var observer = new MutationObserver(callback);
