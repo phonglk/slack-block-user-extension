@@ -28,7 +28,7 @@ const crearteMessageListFilterer = (workspace: Workspace) => async () => {
   let isBlocked = false;
   Array.from(messageNodes).forEach(node => {
       const $div = node.querySelector('div')
-      if (!$div || !$div.classList.contains('c-message')) return;
+      if (!$div || !($div.classList.contains('c-message') || $div.classList.contains('c-message_kit__message'))) return;
       const isAdjacent = $div.classList.contains('c-message--adjacent')
       if (!isAdjacent) {
         const userId = getUserIdFromVirtualItem(node)
