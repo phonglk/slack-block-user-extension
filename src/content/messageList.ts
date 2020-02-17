@@ -4,6 +4,7 @@ import { observeDOM, tryTillSuccess } from "../common/utils";
 
 const MAIN_MESSAGE_LIST_SELECTOR = '.c-message_list .c-virtual_list__item'
 const THREAD_MESSAGE_LIST_SELECTOR = '.p-workspace__secondary_view .c-virtual_list__item'
+const THREAD_PREVIEW_AVATAR_BUTTON_SELECTOR = '.c-avatar--interactive';
 
 const getUserIdFromVirtualItem = (node: Element) => {
   let userId: string
@@ -22,10 +23,27 @@ const getUserIdFromVirtualItem = (node: Element) => {
   return userId
 }
 
-const crearteMessageListFilterer = (workspace: Workspace) => async () => {
+const removeThreadPreviewAvatars = (workspace: Workspace) => {
+  const avatarNodes = document.querySelectorAll(THREAD_PREVIEW_AVATAR_BUTTON_SELECTOR);
+  const blackList = workspace.blackList.list;
+  let isBlocked = false;
+  let userId: string
+
+  Array.from(avatarNodes).forEach((node) => {
+    const $avatar = node.querySelector('img') as HTMLImageElement;
+    const idMatch = $avatar.src.match(/slack[^.]*\.com\/[^-]+-([^-]+)/);
+    if (!idMatch) return false;
+    userId = idMatch[1];
+    isBlocked = blackList.has(userId);
+    (node as HTMLImageElement).style.display = isBlocked ? 'none' : 'block'
+  });
+}
+
+const createMessageListFilterer = (workspace: Workspace) => async () => {
   const messageNodes = document.querySelectorAll(MAIN_MESSAGE_LIST_SELECTOR)
   const blackList = workspace.blackList.list
   let isBlocked = false;
+
   Array.from(messageNodes).forEach(node => {
       const $div = node.querySelector('div')
       if (!$div || !($div.classList.contains('c-message') || $div.classList.contains('c-message_kit__message'))) return;
@@ -39,7 +57,7 @@ const crearteMessageListFilterer = (workspace: Workspace) => async () => {
   })
 }
 
-const crearteThreadFilterer = (workspace: Workspace) => async () => {
+const createThreadFilterer = (workspace: Workspace) => async () => {
   const messageNodes = document.querySelectorAll(THREAD_MESSAGE_LIST_SELECTOR)
   const blackList = workspace.blackList.list
   Array.from(messageNodes).forEach(node => {
@@ -88,7 +106,10 @@ export default async function startMessageListHook(workspace: Workspace) {
     const $messageList = document.body.querySelector('.c-message_list .c-virtual_list__scroll_container')
     if (!$messageList) return setTimeout(startObserve, 200)
     const messageListFilterer = throttle(
-      crearteMessageListFilterer(workspace),
+      () => {
+        createMessageListFilterer(workspace);
+        removeThreadPreviewAvatars(workspace);
+      },
       500
     )
     observeDOM($messageList, { childList: true, subtree: false }, messageListFilterer)
@@ -102,7 +123,7 @@ export default async function startMessageListHook(workspace: Workspace) {
     if (!$secPanel) return false
     let stopThreadObserve: Function
     const messageListFilterer = throttle(
-      crearteThreadFilterer(workspace),
+      createThreadFilterer(workspace),
       500
     )
     onSideBarToggle($secPanel as HTMLElement, (toggle) => {
