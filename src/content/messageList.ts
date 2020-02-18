@@ -4,7 +4,7 @@ import { observeDOM, tryTillSuccess } from "../common/utils";
 
 const MAIN_MESSAGE_LIST_SELECTOR = '.c-message_list .c-virtual_list__item'
 const THREAD_MESSAGE_LIST_SELECTOR = '.p-workspace__secondary_view .c-virtual_list__item'
-const THREAD_PREVIEW_AVATAR_BUTTON_SELECTOR = '.c-avatar--interactive';
+const THREAD_PREVIEW_AVATAR_BUTTON_SELECTOR = '.c-avatar--interactive'
 
 const getUserIdFromVirtualItem = (node: Element) => {
   let userId: string
@@ -23,20 +23,20 @@ const getUserIdFromVirtualItem = (node: Element) => {
   return userId
 }
 
-const removeThreadPreviewAvatars = (workspace: Workspace) => {
-  const avatarNodes = document.querySelectorAll(THREAD_PREVIEW_AVATAR_BUTTON_SELECTOR);
-  const blackList = workspace.blackList.list;
-  let isBlocked = false;
+const removeThreadPreviewAvatars = (workspace: Workspace) => async () => {
+  const avatarNodes = document.querySelectorAll(THREAD_PREVIEW_AVATAR_BUTTON_SELECTOR)
+  const blackList = workspace.blackList.list
+  let isBlocked = false
   let userId: string
 
   Array.from(avatarNodes).forEach((node) => {
-    const $avatar = node.querySelector('img') as HTMLImageElement;
-    const idMatch = $avatar.src.match(/slack[^.]*\.com\/[^-]+-([^-]+)/);
-    if (!idMatch) return false;
-    userId = idMatch[1];
+    const $avatar = node.querySelector('img') as HTMLImageElement
+    const idMatch = $avatar.src.match(/slack[^.]*\.com\/[^-]+-([^-]+)/)
+    if (!idMatch) return false
+    userId = idMatch[1]
     isBlocked = blackList.has(userId);
     (node as HTMLImageElement).style.display = isBlocked ? 'none' : 'block'
-  });
+  })
 }
 
 const createMessageListFilterer = (workspace: Workspace) => async () => {
@@ -106,15 +106,20 @@ export default async function startMessageListHook(workspace: Workspace) {
     const $messageList = document.body.querySelector('.c-message_list .c-virtual_list__scroll_container')
     if (!$messageList) return setTimeout(startObserve, 200)
     const messageListFilterer = throttle(
-      () => {
-        createMessageListFilterer(workspace);
-        removeThreadPreviewAvatars(workspace);
-      },
+      createMessageListFilterer(workspace),
       500
     )
-    observeDOM($messageList, { childList: true, subtree: false }, messageListFilterer)
-    workspace.blackList.onUpdate = messageListFilterer
-    messageListFilterer()
+    const threadPreviewAvatarFilterer = throttle(
+      removeThreadPreviewAvatars(workspace),
+      500
+    )
+    const mutations = () => {
+      messageListFilterer()
+      threadPreviewAvatarFilterer()
+    }
+    observeDOM($messageList, { childList: true, subtree: false }, mutations)
+    workspace.blackList.onUpdate = mutations
+    mutations()
   }
   startObserve()
 
